@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Celaris - #1</title>
+  <link rel="icon" type="image/png" href="https://cdn.discordapp.com/attachments/1074178281332555886/1375228429271695522/CelarisLogo.png?ex=6830ecc8&is=682f9b48&hm=7558bf7d488ac7903d32f0454bb2c8fe96b90137973c7941eef46329ba794035&">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: linear-gradient(145deg, #0f0f0f, #1e1e1e);
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+    .container {
+      text-align: center;
+      max-width: 800px;
+      padding: 20px;
+      animation: slideUp 1s ease forwards;
+    }
+    h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 4rem;
+      color: #ff6f6f;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      color: #aaa;
+    }
+    .buttons a {
+  text-decoration: none;
+  padding: 15px 30px;
+  border-radius: 10px;
+  background: #ff5858;
+  color: #000;
+  font-weight: bold;
+  margin: 10px;
+  transition: all 0.3s ease;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgb(151, 49, 49);
+}
+
+.buttons a:hover {
+  background: #ff5b5b8f;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(255, 101, 101, 0.474);
+}
+
+
+    @keyframes fadeIn {
+      0% { opacity: 0 }
+      100% { opacity: 1 }
+    }
+
+    @keyframes slideUp {
+      0% { transform: translateY(40px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CELARIS</h1>
+    <p>Elevate your gameplay with Celaris.</p>
+    <div class="buttons">
+      <a href="#">Download</a>
+      <a href="#">Join Discord</a>
+    </div>
+  </div>
+</body>
+</html>
