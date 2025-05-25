@@ -25,6 +25,7 @@
     html, body {
       height: 100%;
       overflow: hidden;
+      position: relative;
     }
 
     #vantajs-bg {
@@ -33,6 +34,17 @@
       left: 0;
       width: 100%;
       height: 100%;
+      z-index: -2;
+    }
+
+    /* Dark overlay to reduce background brightness */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.5); /* adjust alpha for darkness */
+      pointer-events: none;
       z-index: -1;
     }
 
@@ -43,6 +55,8 @@
       align-items: center;
       justify-content: center;
       padding: 40px;
+      position: relative;
+      z-index: 0;
     }
 
     h1, p, .checkboxes, .btn, textarea, .output {
@@ -54,11 +68,13 @@
       font-weight: 700;
     }
 
+    /* Subtitle with lighter color and drop shadow for better visibility */
     p {
       font-size: 18px;
       color: var(--subtitle-color);
       margin-top: 10px;
       margin-bottom: 20px;
+      text-shadow: 0 0 6px rgba(0,0,0,0.85);
     }
 
     textarea {
@@ -84,12 +100,27 @@
       outline: none;
     }
 
+    /* Checkbox container */
     .checkboxes {
       display: flex;
       gap: 20px;
       margin-bottom: 20px;
       flex-wrap: wrap;
       color: var(--subtitle-color);
+      text-shadow: 0 0 4px rgba(0,0,0,0.7);
+    }
+
+    /* Add drop shadow to label text inside checkboxes */
+    .checkboxes label {
+      cursor: pointer;
+      transition: color 0.3s ease, text-shadow 0.3s ease;
+      user-select: none;
+    }
+    .checkboxes label:hover {
+      color: var(--main-color);
+      text-shadow:
+        0 0 5px var(--main-color),
+        0 0 10px var(--main-color);
     }
 
     .btn {
@@ -104,11 +135,38 @@
       box-shadow: var(--shadow);
       position: relative;
       overflow: hidden;
+      user-select: none;
     }
 
+    /* Stroke animation on hover for the Humanize button only */
     .btn:hover {
       transform: scale(1.05);
       background: #913fe2;
+      box-shadow:
+        0 0 8px #a64eff,
+        0 0 20px #a64eff,
+        inset 0 0 10px #a64eff;
+      /* add a subtle stroke/glow effect */
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      animation: strokePulse 1.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes strokePulse {
+      0% {
+        outline-color: rgba(166, 78, 255, 0.6);
+        box-shadow:
+          0 0 8px rgba(166, 78, 255, 0.6),
+          0 0 20px rgba(166, 78, 255, 0.6),
+          inset 0 0 10px rgba(166, 78, 255, 0.6);
+      }
+      100% {
+        outline-color: rgba(166, 78, 255, 1);
+        box-shadow:
+          0 0 12px rgba(166, 78, 255, 1),
+          0 0 30px rgba(166, 78, 255, 1),
+          inset 0 0 15px rgba(166, 78, 255, 1);
+      }
     }
 
     .btn::before {
@@ -156,6 +214,7 @@
       transition: 0.4s ease;
       font-weight: bold;
       box-shadow: var(--shadow);
+      user-select: none;
     }
 
     .notif.show {
@@ -182,12 +241,14 @@
     <label><input type="checkbox" id="removeComments"> Remove Comments</label>
     <label><input type="checkbox" id="renameVars"> Rename Variables</label>
     <label><input type="checkbox" id="flattenLogic"> Flatten Logic</label>
+    <label><input type="checkbox" id="minifyLocals"> Minify Locals</label>
   </div>
 
   <button class="btn" onclick="humanizeCode()">Humanize</button>
 
   <div class="output" id="outputBox" style="display: none;"></div>
-  <div class="notif" id="notif">✅ Humanized Successfully</div>
+  <button class="btn" id="clearBtn" style="display: none; margin-top: 10px;" onclick="clearOutput()">Clear Input</button>
+  <div class="notif" id="notif">Humanized Successfully</div>
   <div class="credits">made by @xlesky on discord</div>
 
   <script>
@@ -202,21 +263,33 @@
       size: 1.2
     });
 
-    function showNotification() {
+    function showNotification(text = "Humanized Lua", isError = false) {
       const notif = document.getElementById("notif");
+      notif.textContent = text;
+      notif.style.backgroundColor = isError ? "#ff4d4d" : "var(--main-color)";
       notif.classList.add("show");
-      setTimeout(() => notif.classList.remove("show"), 2000);
+      setTimeout(() => notif.classList.remove("show"), 2500);
     }
 
     function humanizeCode() {
-      let code = document.getElementById("inputCode").value;
+      let code = document.getElementById("inputCode").value.trim();
 
+      if (!code) {
+        showNotification("❌ Please enter some code first!", true);
+        return;
+      }
+
+      if (code.length > 1000) {
+        showNotification("❌ Code exceeds 1000 characters!", true);
+        return;
+      }
+
+      // Your existing processing code here...
       if (document.getElementById("removeComments").checked) {
         code = code.replace(/--\[\[([\s\S]*?)\]\]|--.*/g, "");
       }
-
       if (document.getElementById("renameVars").checked) {
-        code = code.replace(/\blocal\s+(var\d*|temp|a|b|x|y|z)\b/g, (match, p1) => {
+        code = code.replace(/\blocal\s+(var\d*|temp|a|b|x|y|z|playerName|playerScore|playerLevel|tempResult|counter|bonus)\b/g, (match, p1) => {
           const replacements = {
             "var": "data",
             "temp": "buffer",
@@ -229,15 +302,35 @@
           return `local ${replacements[p1] || p1}`;
         });
       }
-
       if (document.getElementById("flattenLogic").checked) {
         code = code.replace(/if\s+true\s+then\s+([\s\S]*?)end/g, "$1");
+      }
+      if (document.getElementById("minifyLocals").checked) {
+        // Your minify locals code here, if you have it implemented
       }
 
       const outputBox = document.getElementById("outputBox");
       outputBox.innerText = code.trim();
       outputBox.style.display = "block";
-      showNotification();
+
+      // Show the clear button now
+      const clearBtn = document.getElementById("clearBtn");
+      clearBtn.style.display = "inline-block";
+
+      showNotification("✅ Humanized Successfully");
+    }
+
+    function clearOutput() {
+      const outputBox = document.getElementById("outputBox");
+      const clearBtn = document.getElementById("clearBtn");
+
+      outputBox.style.display = "none";
+      outputBox.innerText = "";
+      clearBtn.style.display = "none";
+
+      // Optional: clear input box too or just focus on it
+      // document.getElementById("inputCode").value = "";
+      document.getElementById("inputCode").focus();
     }
   </script>
 </body>
